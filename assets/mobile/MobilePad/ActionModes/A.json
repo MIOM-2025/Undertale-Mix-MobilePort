@@ -1,0 +1,11 @@
+{
+  "buttons": [
+    {
+      "button": "buttonA",
+      "buttonIDs": ["A"],
+      "graphic": "a",
+      "position": [1148, 585],
+      "color": "0xFF0000"
+    }
+  ]
+}

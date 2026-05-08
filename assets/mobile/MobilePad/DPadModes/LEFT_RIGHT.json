@@ -1,0 +1,18 @@
+{
+  "buttons": [
+    {
+      "button": "buttonLeft",
+      "buttonIDs": ["LEFT"],
+      "graphic": "left",
+      "position": [0, 585],
+      "color": "0xFFC24B99"
+    },
+    {
+      "button": "buttonRight",
+      "buttonIDs": ["RIGHT"],
+      "graphic": "right",
+      "position": [126, 585],
+      "color": "0xFFF9393F"
+    }
+  ]
+}

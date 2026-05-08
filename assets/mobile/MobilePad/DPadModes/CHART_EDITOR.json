@@ -1,0 +1,52 @@
+{
+  "buttons": [
+  {
+    "button": "buttonUP",
+    "buttonIDs": ["UP"],
+    "graphic": "up",
+    "position": [5, 500],
+    "color": "0xFF4444",
+    "scale": 0.85
+  },
+  {
+    "button": "buttonDOWN",
+    "buttonIDs": ["DOWN"],
+    "graphic": "down",
+    "position": [5, 600],
+    "color": "0xFF4444",
+    "scale": 0.85
+  },
+  {
+    "button": "buttonLEFT",
+    "buttonIDs": ["LEFT"],
+    "graphic": "left",
+    "position": [110, 500],
+    "color": "0xFF4444",
+    "scale": 0.85
+  },
+  {
+    "button": "buttonRIGHT",
+    "buttonIDs": ["RIGHT"],
+    "graphic": "right",
+    "position": [110, 600],
+    "color": "0xFF4444",
+    "scale": 0.85
+  },
+  {
+    "button": "buttonUP2",
+    "buttonIDs": ["UP2"],
+    "graphic": "up",
+    "position": [215, 500],
+    "color": "0xFF4444",
+    "scale": 0.85
+  },
+  {
+    "button": "buttonDOWN2",
+    "buttonIDs": ["DOWN2"],
+    "graphic": "down",
+    "position": [215, 600],
+    "color": "0xFF4444",
+    "scale": 0.85
+  }
+  ]
+}
