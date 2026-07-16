@@ -20,7 +20,7 @@ class Options
 	/**
 	 * MOBILE SETTINGS
 	 */
-	public static var extraButtons:Int = 2;
+	public static var extraButtons:Int = 0;
 	public static var hitboxPos:Bool = false;
 	public static var storageType:String = "EXTERNAL_DATA";
 	public static var controlsAlpha:Float = FlxG.onMobile ? 0.6 : 0;
@@ -62,7 +62,7 @@ class Options
 	public static var modchartingHoldSubdivisions:Int = 4;
 	#end
 
-	public static var lastLoadedMod:String = null;
+	public static var lastLoadedMod:String = "Undertale-mix";
 
 	/**
 	 * EDITORS SETTINGS
