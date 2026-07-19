@@ -180,7 +180,7 @@ function create() {
 	dog = new FlxSprite(840, -17).loadGraphic(Paths.image('credits/dogs/default'));
 	dog.scale.set(4, 4);
 	dog.updateHitbox();
-	dog.antialiasing = false;
+	dog.antialiasing = false;  // 像素风格，关闭抗锯齿
 	add(dog);
 	dog.cameras = [stateCamera];
 	
@@ -547,6 +547,8 @@ function update(elapsed:Float) {
 			dog.loadGraphic(Paths.image('credits/dogs/default'));
 			dog.color = FlxColor.WHITE;
 			dog.antialiasing = false;
+			dog.scale.set(4, 4);
+			dog.updateHitbox();
 			FlxG.mouse.visible = false;
 			if (existingCredits != null && existingCredits.length > 14) {
 				page.visible = true;
@@ -609,6 +611,8 @@ function selectCategory(catIndex:Int) {
 	dog.loadGraphic(Paths.image('credits/dogs/default'));
 	dog.color = FlxColor.WHITE;
 	dog.antialiasing = false;
+	dog.scale.set(4, 4);
+	dog.updateHitbox();
 	createdCredits.visible = true;
 	buttonSelected = catIndex;
 	buttonSubmenu = true;
@@ -852,6 +856,7 @@ function updatePage(?a:Int) {
 }
 
 // ========== 更新狗和名称（支持 antialiasing, tint, scale, 彩虹彩蛋） ==========
+// 修改点：名字始终应用 color（如果有），狗仅当 tint=true 时染色
 function updateCredit(description:String, ?name:String, ?color:String, ?antialiasing:Bool, ?tint:Bool, ?scale:Float) {
 	if (tint == null) tint = true;
 	if (scale == null || scale <= 0) scale = 4.0;
@@ -885,15 +890,20 @@ function updateCredit(description:String, ?name:String, ?color:String, ?antialia
 				rbColorIndex = 0;
 			}
 			creditName.color = rbColors[0];
-			dog.color = FlxColor.WHITE;
+			dog.color = FlxColor.WHITE; // RB 时狗始终白色
 		} else {
 			rbActive = false;
-			if (tint && color != null && color != "") {
+			// ---- 名字：始终应用颜色（如果有），否则白色 ----
+			if (color != null && color != "") {
 				var col = FlxColor.fromString('#' + color);
 				creditName.color = col;
-				dog.color = col;
 			} else {
 				creditName.color = FlxColor.WHITE;
+			}
+			// ---- 狗：由 tint 决定是否染色 ----
+			if (tint && color != null && color != "") {
+				dog.color = FlxColor.fromString('#' + color);
+			} else {
 				dog.color = FlxColor.WHITE;
 			}
 		}
@@ -930,13 +940,13 @@ function createCredits(credits:Array<Dynamic>) {
 	if (maxPages < 1) maxPages = 1;
 }
 
-// ========== 解析 JSON，提取所有字段 ==========
+// ========== 解析 JSON，并按文件名（字典序）排序 ==========
 function formatCredits(category:String) {
-	var credits:Array<String> = getFileList(category);
-	var formattedCredits:Array<Dynamic> = [];
-	if (credits != null && credits.length > 0) {
-		for (i => credit in credits) {
-			var raw = Assets.getText(Paths.json('credits/' + category + '/' + StringTools.replace(credit, '.json', ''))); 
+	var fileNames:Array<String> = getFileList(category);
+	var tempArray:Array<{fileName:String, data:Array<Dynamic>}> = [];
+	if (fileNames != null && fileNames.length > 0) {
+		for (fileName in fileNames) {
+			var raw = Assets.getText(Paths.json('credits/' + category + '/' + StringTools.replace(fileName, '.json', ''))); 
 			var creditData:Dynamic = Json.parse(raw);
 			var antialiasing:Bool = (creditData.antialiasing != null) ? creditData.antialiasing : false;
 			var tint:Bool = (creditData.tint != null) ? creditData.tint : true;
@@ -950,8 +960,23 @@ function formatCredits(category:String) {
 				tint,
 				scale
 			];
-			formattedCredits.push(foundCredit);
+			var nameWithoutExt:String = StringTools.replace(fileName, '.json', '');
+			tempArray.push({fileName: nameWithoutExt, data: foundCredit});
 		}
+	}
+	
+	// 按文件名（不区分大小写）字典序排序
+	tempArray.sort(function(a, b):Int {
+		var nameA:String = a.fileName.toLowerCase();
+		var nameB:String = b.fileName.toLowerCase();
+		if (nameA < nameB) return -1;
+		if (nameA > nameB) return 1;
+		return 0;
+	});
+	
+	var formattedCredits:Array<Dynamic> = [];
+	for (entry in tempArray) {
+		formattedCredits.push(entry.data);
 	}
 	return formattedCredits;
 }
