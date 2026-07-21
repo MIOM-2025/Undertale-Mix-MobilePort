@@ -78,7 +78,7 @@ function create() {
             initX: button.x,
             initY: button.y,
             id: index,
-            add: (category.type == 'checkbox' ? 13 : 0),
+            add: (category.type == 'checkbox' ? 13 : 0), // 向右多偏移2像素，避免与复选框重叠
             option: optionType
         });
         index++;

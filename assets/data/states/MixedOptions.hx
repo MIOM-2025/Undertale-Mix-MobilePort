@@ -47,6 +47,16 @@ var categoryData = [
 			parentValue: 'downscroll',
 			saveTo: Options
 		},
+		// ----- MiddleScroll 选项（存储到 FlxG.save.data）-----
+		{
+			type: 'checkbox',
+			title: 'MiddleScroll',
+			description: '*If checked, notes will scroll/ñfrom the center.',
+			defaultValue: false,
+			parentValue: 'middleScroll',
+			saveTo: FlxG.save.data   // 改用存档保存，而非 Options
+		},
+		// ---------------------------------------------------------
 		{
 			type: 'checkbox',
 			title: 'Ghost Tapping',
@@ -421,7 +431,7 @@ function create() {
 	
 	this.subState = null;
 	
-	// ---------- 退出按钮（统一大小与位置：与 Freeplay 一致）----------
+	// ---------- 退出按钮 ----------
 	uiCamera = new FlxCamera();
 	uiCamera.bgColor = FlxColor.TRANSPARENT;
 	uiCamera.zoom = 1;
@@ -429,9 +439,9 @@ function create() {
 	FlxG.cameras.add(uiCamera, false);
 	
 	exitButton = new FlxSprite().loadGraphic(Paths.image('pause/exit'));
-	exitButton.scale.set(1.6, 1.6);   // 与 Freeplay 相同
+	exitButton.scale.set(1.6, 1.6);
 	exitButton.updateHitbox();
-	exitButton.setPosition(-exitButton.width - 10, 10); // 起始在左外侧，偏移10与目标左距一致
+	exitButton.setPosition(-exitButton.width - 10, 10);
 	exitButton.antialiasing = false;
 	exitButton.cameras = [uiCamera];
 	exitButton.alpha = 0;
@@ -456,7 +466,6 @@ var doOnce:Bool = false;
 public var canExitCategory:Bool = false;
 
 function update(elapsed:Float) {
-	// ========== 模式切换 ==========
 	if (inputMode == "keyboard") {
 		if (FlxG.mouse.justPressed) switchToTouch();
 	} else {
@@ -469,7 +478,6 @@ function update(elapsed:Float) {
 		description.textUpdate(elapsed);
 	}
 
-	// ========== 退出按钮交互（仅当可见时） ==========
 	if (exitButton.visible) {
 		var mousePoint = FlxG.mouse.getWorldPosition(uiCamera);
 		var isHover = exitButton.overlapsPoint(mousePoint, false, uiCamera);
@@ -487,7 +495,6 @@ function update(elapsed:Float) {
 		}
 	}
 
-	// ========== 检测子菜单返回 ==========
 	if (inSubState && this.subState == null) {
 		inSubState = false;
 		optionSelected = false;
@@ -506,11 +513,10 @@ function update(elapsed:Float) {
 		canChange = true;
 		exitButton.visible = true;
 		exitButton.alpha = 1;
-		exitButton.x = 10;      // 复位到目标位置
+		exitButton.x = 10;
 		exitButton.y = 10;
 	}
 
-	// ========== 文本动画 ==========
 	lerp = Math.exp(-elapsed * 28);
 	for (object in optionObjects) {
 		var text:UndertaleText = object.object;
@@ -564,7 +570,6 @@ function update(elapsed:Float) {
 		return;
 	}
 	
-	// ========== 主菜单交互 ==========
 	if (!optionSelected && !inSubState && !exiting && canChange && !specialSubMenu) {
 		var mousePointMain = FlxG.mouse.getWorldPosition(stateCamera);
 		if (FlxG.mouse.justPressed && !isDragging) {
@@ -607,7 +612,6 @@ function update(elapsed:Float) {
 		
 		if (isDragging && FlxG.mouse.justReleased) {
 			var totalDelta = FlxG.mouse.screenY - dragStartY;
-			// 获取点击到的选项
 			var clickedId:Int = -1;
 			for (object in optionObjects) {
 				var text:UndertaleText = object.object;
@@ -621,7 +625,6 @@ function update(elapsed:Float) {
 					if (clickedId == selected) {
 						performAccept();
 					} else {
-						// 仅切换选中
 						selected = clickedId;
 						description.resetAndChangeText(categories[selected].description, true);
 						description.startTyping(0.026, 'text-blip', true);
@@ -633,7 +636,6 @@ function update(elapsed:Float) {
 					}
 				}
 			} else {
-				// 惯性处理
 				var avgVelocity = 0.0;
 				if (velocityHistory.length > 0) {
 					for (v in velocityHistory) avgVelocity += v;
@@ -672,7 +674,6 @@ function update(elapsed:Float) {
 			isDragging = false;
 		}
 
-		// 键盘输入
 		if (inputMode == "keyboard") {
 			if (FlxG.mouse.wheel != 0) {
 				updateSelection(-FlxG.mouse.wheel);
@@ -693,7 +694,6 @@ function update(elapsed:Float) {
 	}
 }
 
-// ========== 模式切换 ==========
 function switchToTouch() {
 	if (inputMode == "touch") return;
 	inputMode = "touch";
@@ -704,7 +704,6 @@ function switchToKeyboard() {
 	inputMode = "keyboard";
 }
 
-// ========== 进入子菜单 ==========
 function performAccept() {
 	if (optionSelected || exiting || !canChange || inSubState) return;
 	if (inputMode == "touch" && categories[selected].title == "Controls") return;
@@ -770,7 +769,6 @@ function enterTransition(e:Bool) {
 			boxCamera.visible = true;
 			updateSelection();
 		}});
-		// 退出按钮：从左外侧滑入（先快后慢），目标位置 (10,10)
 		exitButton.x = -exitButton.width - 10;
 		exitButton.y = 10;
 		exitButton.alpha = 0;
@@ -787,7 +785,6 @@ function enterTransition(e:Bool) {
 				}
 			}});
 		}});
-		// 退出按钮：向上方移出（先快后慢）
 		FlxTween.tween(exitButton, {y: -exitButton.height - 10, alpha: 0}, 0.4, {ease: FlxEase.quartOut, onComplete: function() {
 			exitButton.visible = false;
 		}});

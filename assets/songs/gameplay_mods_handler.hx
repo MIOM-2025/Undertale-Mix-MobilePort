@@ -6,8 +6,11 @@ var scrollType:String = 'multiplicative';
 var healthGainMult:Float = 1;
 var healthLossMult:Float = 1;
 var missInstaKill:Bool = false;
+var botplayEnabled:Bool = false;          // Botplay flag, per-song
+var middleScrollLoaded:Bool = false;      // MiddleScroll 脚本加载标记
 
 var songExists:Bool = false;
+var botplayLoaded:Bool = false;          // Avoid loading the bot script multiple times
 
 function create() {
     var songName = PlayState.SONG.meta.name;
@@ -41,8 +44,14 @@ function create() {
             missInstaKill = Reflect.field(FlxG.save.data, prefix + 'missInstaKill');
         else
             missInstaKill = false;
+
+        // Read per-song botplay setting
+        if (Reflect.hasField(FlxG.save.data, prefix + 'botplay'))
+            botplayEnabled = Reflect.field(FlxG.save.data, prefix + 'botplay');
+        else
+            botplayEnabled = false;
     }
-    // 如果歌曲未解锁，所有设置维持默认值（已在变量声明时设定）
+    // If song is not unlocked, all settings remain at defaults (already set)
 }
 
 function postCreate() {
@@ -53,6 +62,19 @@ function postCreate() {
         scrollSpeed *= userScrollSpeed;
     } else {
         scrollSpeed = userScrollSpeed;
+    }
+
+    // Load botplay script if enabled and not already loaded
+    if (botplayEnabled && !botplayLoaded) {
+        importScript("data/scripts/botplay");
+        botplayLoaded = true;
+    }
+
+    // Load MiddleScroll script if the save data option is enabled
+    // Now reading from FlxG.save.data instead of Options
+    if (FlxG.save.data.middleScroll != null && FlxG.save.data.middleScroll && !middleScrollLoaded) {
+        importScript("data/scripts/MiddleScroll");
+        middleScrollLoaded = true;
     }
 }
 
@@ -78,7 +100,7 @@ function onEvent(e) {
 
     if (e.event.name == 'Scroll Speed Change' && scrollType == 'constant') {
         e.cancel();
-        // 取消可能存在的缓动动画
+        // Cancel any existing tween
         if (eventsTween.get('scrollSpeedTween') != null) {
             eventsTween.get('scrollSpeedTween').cancel();
         }

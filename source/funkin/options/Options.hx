@@ -220,8 +220,6 @@ class Options
 		__save.bind(name, path);
 		__load();
 
-	
-
 		if (!__eventAdded) {
 			Lib.application.onExit.add(function(i:Int) {
 				Logs.traceColored([
@@ -273,8 +271,17 @@ class Options
 		FlxG.sound.muteKeys = SOLO_VOLUME_MUTE;
 	}
 
+	/**
+	 * 保存所有选项到磁盘。
+	 * 修复：添加 __save.flush() 确保数据被写入文件。
+	 */
 	public static function save() {
 		volume = FlxG.sound.volume;
-		__flush();
+		__flush();            // 将当前所有静态变量写入 __save.data
+		if (__save != null) {
+			__save.flush();   // 强制将数据持久化到磁盘
+		} else {
+			trace("[Options] Warning: __save is null, cannot flush.");
+		}
 	}
 }

@@ -34,7 +34,20 @@ var targetSwitchState:Bool = false;
 var countdownEnded:Bool = false;
 var rectClicked:Bool = false;
 
+// ===== Botplay 检测（通过歌曲存档字段 shrine_botplay）=====
+var isBotPlay:Bool = false;
+
+// ===== 切换延迟（毫秒），现在设为 1000ms（1 秒）=====
+var switchDelayMs:Int = 1000;
+
 function postCreate() {
+	// ----- 读取当前歌曲的 Botplay 开关（歌曲名为 "shrine"）-----
+	try {
+		isBotPlay = Reflect.field(FlxG.save.data, 'shrine_botplay') == true;
+	} catch (e:Dynamic) {
+		isBotPlay = false;
+	}
+
 	if (!FlxG.save.data.shrine_mechanics_allowed) {
 		return;
 	}
@@ -78,7 +91,7 @@ function postCreate() {
 	keyString = CoolUtil.keyToString(switchKey);
 	trace(keyString);
 
-	// ----- 创建触摸切换图片（不透明）-----
+	// ----- 创建触摸切换图片（SP.png）-----
 	touchCamera = new FlxCamera();
 	touchCamera.bgColor = FlxColor.TRANSPARENT;
 	touchCamera.zoom = 1;
@@ -86,65 +99,58 @@ function postCreate() {
 	FlxG.cameras.add(touchCamera, false);
 
 	touchRect = new FlxSprite();
-	touchRect.loadGraphic(Paths.image('SP'));          // 加载图片 SP.png
-	touchRect.scale.x = FlxG.width / touchRect.width;  // 宽度拉伸至屏幕宽度
-	touchRect.scale.y = touchRect.scale.x;            // 保持比例
+	touchRect.loadGraphic(Paths.image('SP'));
+	touchRect.scale.x = FlxG.width / touchRect.width;
+	touchRect.scale.y = touchRect.scale.x;
 	touchRect.updateHitbox();
-	touchRect.alpha = 1;                              // 完全不透明
-	touchRect.color = FlxColor.WHITE;                 // 默认白色（原色）
+	touchRect.alpha = 1;
+	touchRect.color = FlxColor.WHITE;
 	touchRect.cameras = [touchCamera];
 	touchRect.screenCenter(FlxAxes.X);
-	touchRect.y = FlxG.height;                         // 初始隐藏在屏幕下方
-	rectTargetY = FlxG.height - touchRect.height;      // 上升后底部对齐屏幕底部
+	touchRect.y = FlxG.height;
+	rectTargetY = FlxG.height - touchRect.height;
+	// botplay 下完全隐藏触摸矩形
 	touchRect.visible = false;
 	add(touchRect);
 }
 
-// ----- 工具：获取下一个指定颜色的特殊音符时间 -----
+// ----- 工具函数 -----
 function getNextNoteTimeOfColor(color:Bool):Float {
 	var lookingFor = color ? 'Blue Side Note' : 'Red Side Note';
-	var groupLength = playerStrums.notes.length - 1;
-	for (i in 0...groupLength) {
-		var id = groupLength - i;
-		var note = playerStrums.notes.members[id];
-		if (note != null && note.noteType == lookingFor) {
+	for (note in playerStrums.notes) {
+		if (note != null && note.noteType == lookingFor && note.strumTime > inst.time) {
 			return note.strumTime;
 		}
 	}
 	return 0;
 }
 
-// ----- 获取下一个需要切换的目标音符时间 -----
+// 查找时间上最近的下一个需要切换的特殊音符
 function nextNoteTime() {
 	var lookingFor = (switched ? 'Red Side Note' : 'Blue Side Note');
-	var groupLength = playerStrums.notes.length - 1;
-	for (i in 0...groupLength) {
-		var id = groupLength - i;
-		var note = playerStrums.notes.members[id];
-		if (note != null && note.noteType == lookingFor) {
-			return note.strumTime;
+	var closestTime:Float = Math.POSITIVE_INFINITY;
+	var found:Bool = false;
+	for (note in playerStrums.notes) {
+		if (note != null && note.noteType == lookingFor && note.strumTime > inst.time) {
+			if (note.strumTime < closestTime) {
+				closestTime = note.strumTime;
+				found = true;
+			}
 		}
 	}
-	return 0;
+	return found ? closestTime : 0;
 }
 
-// ----- 获取最近的一个特殊音符（红或蓝）及其颜色 -----
 function getNextSpecialNote():{time:Float, isBlue:Bool} {
-	var groupLength = playerStrums.notes.length - 1;
 	var closestTime:Float = Math.POSITIVE_INFINITY;
 	var closestIsBlue:Bool = false;
 	var found:Bool = false;
-	var currentTime = inst.time;
-	for (i in 0...groupLength) {
-		var id = groupLength - i;
-		var note = playerStrums.notes.members[id];
+	for (note in playerStrums.notes) {
 		if (note != null && (note.noteType == 'Red Side Note' || note.noteType == 'Blue Side Note')) {
-			if (note.strumTime > currentTime + 0.001) {
-				if (note.strumTime < closestTime) {
-					closestTime = note.strumTime;
-					closestIsBlue = (note.noteType == 'Blue Side Note');
-					found = true;
-				}
+			if (note.strumTime > inst.time && note.strumTime < closestTime) {
+				closestTime = note.strumTime;
+				closestIsBlue = (note.noteType == 'Blue Side Note');
+				found = true;
 			}
 		}
 	}
@@ -154,10 +160,7 @@ function getNextSpecialNote():{time:Float, isBlue:Bool} {
 
 function updateNoteVisibility() {
 	if (!FlxG.save.data.shrine_mechanics_allowed) return;
-	var groupLength = playerStrums.notes.length - 1;
-	for (i in 0...groupLength) {
-		var id = groupLength - i;
-		var note = playerStrums.notes.members[id];
+	for (note in playerStrums.notes) {
 		if (note != null) {
 			if (note.noteType == 'Red Side Note') { note.canBeHit = !switched; note.alpha = (switched ? 0.5 : 1); }
 			if (note.noteType == 'Blue Side Note') { note.canBeHit = switched; note.alpha = (switched ? 1 : 0.5); }
@@ -195,12 +198,13 @@ var thresholdQuarter = switchThreshold / 4;
 var part:Int = 0;
 var playOnce = false;
 
-// ----- 上升（先快后慢，0.4秒）-----
+// ----- 触摸矩形的上升/下降（仅在非 Botplay 时使用）-----
 function startRise() {
+	if (isBotPlay) return;
 	if (!rectMoving && !rectRaised) {
 		touchRect.visible = true;
 		touchRect.alpha = 1;
-		touchRect.color = FlxColor.WHITE;    // 每次上升恢复原色
+		touchRect.color = FlxColor.WHITE;
 		rectMoving = true;
 		rectClicked = false;
 		FlxTween.tween(touchRect, {y: rectTargetY}, 0.4, {
@@ -213,8 +217,8 @@ function startRise() {
 	}
 }
 
-// ----- 下降（先快后慢，0.4秒）-----
 function startFall() {
+	if (isBotPlay) return;
 	if (!rectMoving && rectRaised) {
 		rectMoving = true;
 		FlxTween.tween(touchRect, {y: FlxG.height}, 0.4, {
@@ -228,9 +232,9 @@ function startFall() {
 	}
 }
 
-// ----- 执行切换（玩家触发）-----
+// ----- 执行切换（玩家手动触发）-----
 function doSwitch() {
-	if (!playerStrums.cpu && switchCamera.visible) {
+	if (!isBotPlay && !playerStrums.cpu && switchCamera.visible) {
 		if (part != 0) {
 			switchText.text = 'oh okay :(';
 		}
@@ -251,7 +255,6 @@ function update() {
 		switchTimer.y = switchAlert.y - 30;
 	}
 
-	// ----- 计算倒计时状态 -----
 	timeLeft = trackedTime - inst.time;
 	countdownActive = (timeLeft > 0 && timeLeft < switchThreshold);
 	
@@ -265,10 +268,14 @@ function update() {
 		}
 	}
 	
-	// ----- 矩形控制 -----
+	// 倒计时与矩形控制
 	if (countdownActive) {
-		if (!rectMoving && !rectRaised) {
-			startRise();
+		if (!isBotPlay) {
+			if (!rectMoving && !rectRaised) {
+				startRise();
+			}
+		} else {
+			if (touchRect.visible) touchRect.visible = false;
 		}
 		
 		timeAlertPart = switchThreshold - (switchThreshold - timeLeft);
@@ -295,39 +302,47 @@ function update() {
 			}
 		}
 		
-		if (part == 0) {
-			if (!playOnce) {
-				FlxG.sound.play(Paths.sound('switchpull'));
-				if (playerStrums.cpu) {
-					switched = !switched;
-					updateSwitch();
-				}
-				playOnce = true;
-				countdownEnded = true;
+		// 倒计时归零瞬间
+		if (part == 0 && !playOnce) {
+			FlxG.sound.play(Paths.sound('switchpull'));
+			if (isBotPlay) {
+				// Botplay 自动切换颜色
+				switched = !switched;
+				updateSwitch();
+				touchRect.visible = false;
+				rectRaised = false;
+				rectMoving = false;
+			} else if (playerStrums.cpu) {
+				switched = !switched;
+				updateSwitch();
 			}
+			playOnce = true;
+			countdownEnded = true;
 			oldPart = 4;
 		}
 	} else {
-		if (rectRaised && !rectMoving) {
-			var nextNote = getNextSpecialNote();
-			if (nextNote != null) {
-				if (switched == nextNote.isBlue) {
+		if (!isBotPlay) {
+			if (rectRaised && !rectMoving) {
+				var nextNote = getNextSpecialNote();
+				if (nextNote != null) {
+					if (switched == nextNote.isBlue) {
+						startFall();
+					}
+				} else {
 					startFall();
 				}
-			} else {
-				startFall();
 			}
 		}
 	}
 
-	// ========== 触控检测：点击后染黄 ==========
-	if (rectRaised && !rectMoving && touchRect.visible && !rectClicked) {
+	// 触控检测
+	if (!isBotPlay && rectRaised && !rectMoving && touchRect.visible && !rectClicked) {
 		for (touch in FlxG.touches.list) {
 			if (touch.justReleased) {
 				var touchPoint = touch.getWorldPosition(touchCamera);
 				if (touchRect.overlapsPoint(touchPoint, false, touchCamera)) {
 					rectClicked = true;
-					touchRect.color = FlxColor.YELLOW;   // 点击后染黄
+					touchRect.color = FlxColor.YELLOW;
 					doSwitch();
 					break;
 				}
@@ -336,7 +351,7 @@ function update() {
 	}
 
 	// 键盘/手柄切换
-	if (controls.getJustPressed('MECH_SWITCH') && !playerStrums.cpu && switchCamera.visible) {
+	if (!isBotPlay && controls.getJustPressed('MECH_SWITCH') && !playerStrums.cpu && switchCamera.visible) {
 		doSwitch();
 	}
 	
@@ -352,7 +367,8 @@ function stepHit(curStep:Int) {
 
 function updateTime() {
 	playOnce = false;
-	trackedTime = nextNoteTime() - thresholdQuarter;
+	// 倒计时结束点设置为下一个特殊音符时刻 + switchDelayMs 毫秒 - 倒计时总长
+	trackedTime = nextNoteTime() + switchDelayMs - switchThreshold;
 	if (timeText != null) { timeText.text = trackedTime; }
 }
 

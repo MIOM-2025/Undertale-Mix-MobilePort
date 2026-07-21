@@ -36,33 +36,29 @@ var accuraryText:UndertaleText;
 var accuracy:UndertaleText;
 var rankText:UndertaleText;
 var rank:UndertaleText;
-var mechanics:UndertaleText;      // 主标签
-var checkbox:FlxSprite;           // 复选框
+var mechanics:UndertaleText;
+var checkbox:FlxSprite;
 var variation:UndertaleText;
 var render:FlxSprite;
 var tip:UndertaleText = new UndertaleText(0, 0, 'press [ctrl] to open gameplay modifers menu.', 'left', FlxG.width, 2.5, 'FFFFFF', 'crypt');
 var tipBG:FlxSprite;
 
-// ---------- 摄像机 ----------
 var uiCamera:FlxCamera;
-// 一级按钮（左上）
-var exitBtn:FlxSprite;      
-// 二级按钮（卡片内及左下）
-var startBtn:FlxSprite;     
-var startBtnBg:FlxSprite;   
-var settingsSubBtn:FlxSprite; 
-var exitSubBtn:FlxSprite;   // 使用原版退出图标（backspace）
-// 警告专用
-var warnExitBtn:FlxSprite;  // 警告退出按钮（左下角）
-var skipText:UndertaleText; // 剩余点击次数文本（放置在底部）
-var warnBg:FlxSprite;       // 警告背景
+var exitBtn:FlxSprite;
+var startBtn:FlxSprite;
+var startBtnBg:FlxSprite;
+var settingsSubBtn:FlxSprite;
+var exitSubBtn:FlxSprite;
+var warnExitBtn:FlxSprite;
+var skipText:UndertaleText;
+var warnBg:FlxSprite;
 var warnTitle:UndertaleText;
 var warnInfo:UndertaleText;
 var warningStuff:Array<Dynamic> = [];
 var createdWarningStuff:Bool = false;
 var skipClicksRemaining:Int = 3;
 var skipTimer:Float = 0;
-var skipPhase:Int = 0;      // 0:正常显示, 1:淡出中, -1:完全隐藏
+var skipPhase:Int = 0;
 var skipAlpha:Float = 1;
 
 var transition:Bool = true;
@@ -81,31 +77,21 @@ var themeVolume:Float = 1;
 var theme:FlxSound;
 var previewTheme:FlxSound;
 
-// ========== 键盘/触摸模式管理 ==========
 var inputMode:String = "keyboard";
 var hoveredObject:UndertaleText = null;
 var touchSelectedID:Int = -1;
-var selectedButton:Int = -1; // 二级菜单键盘导航：0-开始，1-设置，2-机制
+var selectedButton:Int = -1;
 
-// 开始游戏淡出遮罩（放在最顶层）
 var fadeOutCover:FlxSprite;
-
-// ★★★ 锁对象：用于与调试菜单通信 ★★★
 var lockObj:Dynamic = { isSS: false };
-
-// ★★★ 存储灰色水平线 ★★★
 var lines:Array<FlxSprite> = [];
-
-// ★★★ 开始游戏过渡标志 ★★★
 var startingGame:Bool = false;
 
-// ★★★ 统一高亮机制组 ★★★
 function setMechanicsHighlight(highlight:Bool) {
     if (mechanics != null) mechanics.color = highlight ? FlxColor.YELLOW : FlxColor.WHITE;
     if (checkbox != null) checkbox.color = highlight ? FlxColor.YELLOW : FlxColor.WHITE;
 }
 
-// ★★★ week 闪烁计时器 ★★★
 var weekFlashTimer:FlxTimer;
 
 function create() {
@@ -160,7 +146,6 @@ function create() {
 	longAssLine.alpha = 0.5;
 	add(longAssLine);
 	
-	// ---- 创建灰色水平线并存入 lines 数组 ----
 	for (i in 0...14) {
 		var line:FlxSprite = new FlxSprite(258, 239.5 + (20 * i)).makeGraphic(200, 1, FlxColor.WHITE);
 		line.alpha = 0.5;
@@ -169,7 +154,6 @@ function create() {
 		lines.push(line);
 	}
 	
-	// ★★★ week：不透明，白色，悬停不变色 ★★★
 	week = new UndertaleText(71, background.y + 5, '< Week Name >', 'center', FlxG.width, 0.5, 'FFFFFF', 'wonder');
 	week.alpha = 1;
 	week.color = FlxColor.WHITE;
@@ -193,14 +177,11 @@ function create() {
 	generateBox();
 	boxVisibility(false);
 	
-	// ---------- 创建按钮 ----------
-	// 一级退出按钮（左上），使用 pause/exit 缩放 1.6
 	exitBtn = createButton('exit', 1.6);
 	exitBtn.setPosition(10, 10);
 	exitBtn.cameras = [uiCamera];
 	add(exitBtn);
 	
-	// 开始按钮（卡片右下），缩放 1.6
 	startBtn = createButton('resume', 1.6);
 	startBtn.cameras = [uiCamera];
 	startBtn.visible = false;
@@ -212,30 +193,26 @@ function create() {
 	startBtnBg.alpha = 0;
 	add(startBtnBg);
 	
-	// 二级设置按钮（卡片内），缩放 1.6
 	settingsSubBtn = createButton('settings', 1.6);
 	settingsSubBtn.cameras = [uiCamera];
 	settingsSubBtn.visible = false;
 	add(settingsSubBtn);
 	
-	// ***** 二级退出按钮（左下），使用原版 backspace 图标，缩放 4.0 *****
 	exitSubBtn = new FlxSprite().loadGraphic(Paths.image('freeplay/backspace'));
-	exitSubBtn.scale.set(4.0, 4.0);
+	// ★ 改动：将退出按钮放大，从 4.0 改为 5.5
+	exitSubBtn.scale.set(5.5, 5.5);
 	exitSubBtn.updateHitbox();
 	exitSubBtn.antialiasing = false;
 	exitSubBtn.cameras = [uiCamera];
 	exitSubBtn.visible = false;
 	add(exitSubBtn);
 	
-	// ***** 创建淡出遮罩，并确保它被添加到最顶层（在 uiCamera 下） *****
 	fadeOutCover = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
 	fadeOutCover.cameras = [uiCamera];
 	fadeOutCover.alpha = 0;
 	fadeOutCover.visible = false;
-	// 最后添加，确保它在所有其他 UI 元素之上
 	add(fadeOutCover);
 	
-	// 初始化模式
 	#if mobile
 		inputMode = "touch";
 	#else
@@ -253,18 +230,15 @@ function create() {
 	}
 	updateCategory();
 	
-	// 启动进入动画（所有需要淡入的元素一开始设为透明）
 	menuTransition(false);
 }
 
-// ★★★ 子状态关闭时确保解锁（安全后备）★★★
 override function onSubStateClose():Void {
     super.onSubStateClose();
     lockObj.isSS = false;
     transition = false;
 }
 
-// 辅助：创建按钮（使用pause/资源），指定缩放
 function createButton(asset:String, scale:Float = 1.6):FlxSprite {
 	var btn:FlxSprite = new FlxSprite().loadGraphic(Paths.image('pause/' + asset));
 	btn.scale.set(scale, scale);
@@ -321,12 +295,10 @@ var anotherAccept:Bool = false;
 var acceptedAgain:Bool = false;
 
 function update(elapsed:Float) {
-	// ===== ★★★ 如果调试菜单打开、或正在开始游戏过渡、或菜单过渡中，完全跳过所有逻辑 ★★★ =====
 	if (lockObj.isSS || startingGame || transition) {
 		return;
 	}
 
-	// 模式切换
 	if (inputMode == "keyboard") {
 		if (FlxG.mouse.justPressed) {
 			switchToTouch();
@@ -337,7 +309,6 @@ function update(elapsed:Float) {
 		}
 	}
 	
-	// ---------- 警告跳过计时逻辑 ----------
 	if (createdWarningStuff && warningStuff[0].visible) {
 		if (skipPhase != -1) {
 			skipTimer += elapsed;
@@ -360,11 +331,9 @@ function update(elapsed:Float) {
 		}
 	}
 	
-	// ---------- 按钮点击处理（统一检测） ----------
 	if (!transition && !inGameplaySubstate) {
 		var mousePoint = FlxG.mouse.getWorldPosition(uiCamera);
 		
-		// 警告退出按钮（最高优先级）
 		if (createdWarningStuff && warningStuff[0].visible) {
 			if (FlxG.mouse.justReleased) {
 				if (warnExitBtn != null && warnExitBtn.visible && warnExitBtn.overlapsPoint(mousePoint, false, uiCamera)) {
@@ -383,6 +352,7 @@ function update(elapsed:Float) {
 						FlxG.sound.play(Paths.sound('select'), Options.volumeSFX);
 						songWarning(false);
 						anotherAccept = false;
+						startingGame = true;
 						new FlxTimer().start(0.1, function(_) {
 							startSongAfterWarning();
 						});
@@ -435,7 +405,6 @@ function update(elapsed:Float) {
 				settingsSubBtn.color = FlxColor.WHITE;
 			}
 			
-			// ★★★ 检测机制组（checkbox 或 mechanics）★★★
 			var mechGroupVisible = (checkbox != null && checkbox.visible);
 			if (mechGroupVisible) {
 				var overMech = false;
@@ -453,7 +422,6 @@ function update(elapsed:Float) {
 						return;
 					}
 				} else {
-					// 只有不是键盘选中状态（selectedButton != 2）时才取消高亮
 					if (selectedButton != 2) {
 						setMechanicsHighlight(false);
 					}
@@ -461,29 +429,22 @@ function update(elapsed:Float) {
 			}
 		}
 		
-		// ★★★ 处理 week 点击（无悬停变黄，仅闪烁）★★★
 		if (week != null && week.visible && !checkingBox && !(createdWarningStuff && warningStuff[0].visible)) {
 			var mouseWorldMain = FlxG.mouse.getWorldPosition(camera);
 			var overlapping = week.overlapsPoint(mouseWorldMain, true);
 			var mouseScreenX = FlxG.mouse.screenX;
 			var isRightHalf = mouseScreenX > FlxG.width * 0.5;
 			
-			// 点击处理：必须右半部分，且闪烁计时器未激活
 			if (FlxG.mouse.justReleased && overlapping && isRightHalf) {
 				if (weekFlashTimer == null || !weekFlashTimer.active) {
-					// 允许切换
 					FlxG.sound.play(Paths.sound('squeak'), Options.volumeSFX);
-					// 闪烁：立即变黄
 					week.color = FlxColor.YELLOW;
 					if (weekFlashTimer != null) weekFlashTimer.cancel();
 					weekFlashTimer = new FlxTimer().start(0.1, function(_) {
 						week.color = FlxColor.WHITE;
 						weekFlashTimer = null;
 					});
-					// 切换分类
 					updateCategory(1);
-				} else {
-					// 闪烁期间点击：忽略（回绝），不执行任何操作
 				}
 			}
 		}
@@ -496,7 +457,6 @@ function update(elapsed:Float) {
 		return;
 	}
 
-	// ---------- 键盘处理 ----------
 	if (inputMode == "keyboard") {
 		if (!checkingBox) {
 			if (FlxG.keys.justPressed.CONTROL) {
@@ -552,7 +512,6 @@ function update(elapsed:Float) {
 		}
 	}
 	
-	// ---------- 触摸模式歌曲选择 ----------
 	if (inputMode == "touch" && !checkingBox) {
 		var mouseWorldSong = FlxG.mouse.getWorldPosition(songCamera);
 		var leftDeadZone = FlxG.width * 0.35;
@@ -636,7 +595,6 @@ function update(elapsed:Float) {
 function updateButtonSelection(idx:Int) {
 	if (startBtn != null) startBtn.color = FlxColor.WHITE;
 	if (settingsSubBtn != null) settingsSubBtn.color = FlxColor.WHITE;
-	// 机制组高亮（checkbox 和 mechanics）
 	if (idx == 2) {
 		setMechanicsHighlight(true);
 	} else {
@@ -707,10 +665,8 @@ function updateCategory(?v:Int) {
 		index++;
 	}
 	
-	// ★★★ 更新文本，颜色置为白色（不影响闪烁状态）★★★
 	if (week != null) {
 		week.text = '< ' + currentWeek.categoryName.toLowerCase() + ' >';
-		// 如果闪烁计时器未激活，才设为白色；否则保持黄色（但闪烁期间不允许切换，所以不会发生）
 		if (weekFlashTimer == null || !weekFlashTimer.active) {
 			week.color = FlxColor.WHITE;
 		}
@@ -838,7 +794,6 @@ function updateSelection(?v:Int) {
 	}
 }
 
-// ★★★ 修改点：退出按钮动画 ★★★
 function menuTransition(back:Bool) {
 	transition = true;
 
@@ -909,16 +864,13 @@ function menuTransition(back:Bool) {
 		FlxTween.tween(line, {alpha: targetAlpha * 0.5}, transitionTime, {ease: FlxEase.cubeInOut});
 	}
 
-	// ★★★ 新的退出按钮动画（替换原来的简单透明度补间）★★★
 	if (exitBtn != null) {
-		var animTime:Float = 0.4; // 固定0.4秒
+		var animTime:Float = 0.4;
 		if (back) {
-			// 退出：从当前位置向左移出（x 变为负值），同时淡出
-			exitBtn.x = 10;      // 确保起始位置正确（默认位置）
+			exitBtn.x = 10;
 			exitBtn.y = 10;
 			FlxTween.tween(exitBtn, {x: -exitBtn.width - 10, alpha: 0}, animTime, {ease: FlxEase.quartOut});
 		} else {
-			// 进入：从上方（y 负值）落至默认位置，同时淡入
 			exitBtn.x = 10;
 			exitBtn.y = -exitBtn.height - 10;
 			exitBtn.alpha = 0;
@@ -983,7 +935,6 @@ function generateBox() {
 	rank.updateHitbox();
 	boxItems.push(rank);
 	
-	// ----- 机制部分（仅保留主标签和复选框，无提示）-----
 	mechanics = new UndertaleText(boxTitle.x, boxTitle.y + 376, 'MECHANICS:', 'left', FlxG.width, 4, 'FFFFFF', 'undertale-pixel');
 	mechanics.updateHitbox();
 	boxItems.push(mechanics);
@@ -997,7 +948,6 @@ function generateBox() {
 	checkbox.scale.set(4, 4);
 	checkbox.updateHitbox();
 	boxItems.push(checkbox);
-	// --------------------------------------------
 	
 	box.updateHitbox();
 	box.screenCenter();
@@ -1007,7 +957,6 @@ function generateBox() {
 		item.cameras = [uiCamera];
 		add(item);
 	}
-	// 默认隐藏，由 boxVisibility 控制
 	checkbox.visible = false;
 	mechanics.visible = false;
 }
@@ -1057,7 +1006,6 @@ function updateBox(song:Dynamic) {
 	variation.text = song.variation;
 	variation.color = FlxColor.fromString(song.variationColor);
 	
-	// 显示/隐藏分数相关（保持原有逻辑）
 	for (item in [scoreText, score, accuracyText, accuracy, rankText, rank]) {
 		item.visible = songExists;
 	}
@@ -1089,7 +1037,6 @@ function updateBox(song:Dynamic) {
 		rank.text = songData.misses;
 	}
 	
-	// 控制机制组可见性（无提示）
 	if (song.mechanics == true) {
 		var saveMechField:String = song.song + '_mechanics_allowed';
 		var mechanicAllowed:Dynamic = Reflect.field(FlxG.save.data, saveMechField);
@@ -1109,7 +1056,6 @@ function updateBox(song:Dynamic) {
 	updateAllButtonsVisibility();
 }
 
-// ★★★ 卡片内按钮布局（移除了机制组位置计算）★★★
 function positionButtonsInCard() {
 	if (box == null) return;
 	var cardX = box.x;
@@ -1117,7 +1063,6 @@ function positionButtonsInCard() {
 	var cardW = box.width;
 	var cardH = box.height;
 	
-	// 1. 先定位 startBtn 和 settingsSubBtn（保持原逻辑）
 	if (startBtn != null) {
 		startBtn.setPosition(cardX + cardW - startBtn.width - 15, cardY + cardH - startBtn.height - 15);
 		startBtn.visible = true;
@@ -1184,9 +1129,13 @@ function startSong() {
 	startSongAfterWarning();
 }
 
-function startFadeOutAndSwitch() {
+function startSongAfterWarning() {
 	startingGame = true;
-	
+	anotherAccept = false;
+	startFadeOutAndSwitch();
+}
+
+function startFadeOutAndSwitch() {
 	if (fadeOutCover != null) {
 		remove(fadeOutCover);
 		add(fadeOutCover);
@@ -1196,7 +1145,6 @@ function startFadeOutAndSwitch() {
 	}
 	
 	new FlxTimer().start(0.35, function(_) {
-		// ★★★ 读取当前歌曲专属的对手模式设置 ★★★
 		var oppModeSaved = Reflect.field(FlxG.save.data, currentSong.song + '_gameOpponentMode');
 		var finalOppMode = (oppModeSaved != null) ? oppModeSaved : false;
 		
@@ -1223,11 +1171,6 @@ function startFadeOutAndSwitch() {
 	});
 }
 
-function startSongAfterWarning() {
-	anotherAccept = false;
-	startFadeOutAndSwitch();
-}
-
 function toggleMechanics() {
 	var saveMechField:String = currentSong.song + '_mechanics_allowed';
 	var mechanicAllowed:Dynamic = Reflect.field(FlxG.save.data, saveMechField);
@@ -1236,72 +1179,80 @@ function toggleMechanics() {
 	checkbox.animation.play((mechanicAllowed ? 'checking' : 'unchecking'), true);
 }
 
+// ★ 改动：此函数已修改，Botplay 描述加入换行符 /ñ
 function openSongSettings() {
-	if (!fileExists || !songExists) return;
+    if (!fileExists || !songExists) return;
 
-	lockObj.isSS = true;
+    lockObj.isSS = true;
 
-	var songKey = currentSong.song;
+    var songKey = currentSong.song;
 
-	// 动态构建设置项，每个 parentValue 都使用歌曲专属字段
-	var configArray:Array<Dynamic> = [
-		{
-			type: 'choice',
-			title: 'Scroll Type',
-			description: '*If the scroll speed value/ñshould multiply or replace/ñthe song\'s scroll speed.',
-			defaultValue: 0,
-			parentValue: songKey + '_gameScrollType',
-			choices: ['multiplicative', 'constant']
-		},
-		{
-			type: 'slider',
-			title: 'Scroll Speed',
-			description: '*Your scroll speed.',
-			defaultValue: 1,
-			parentValue: songKey + '_gameScrollSpeed',
-			min: 0.1,
-			max: 6,
-			valueStep: 0.05
-		},
-		{
-			type: 'slider',
-			title: 'Health Gain Multiplier',
-			description: '*The value your health won/ñwhen hitting a note is/ñmultiplied by.',
-			defaultValue: 1,
-			parentValue: songKey + '_gameHealthGainMult',
-			valueSuffix: 'x',
-			max: 5,
-			min: 0.1,
-			valueStep: 0.1
-		},
-		{
-			type: 'slider',
-			title: 'Health Loss Multiplier',
-			description: '*The value your health lost/ñwhen missing a note is/ñmultiplied by.',
-			defaultValue: 1,
-			parentValue: songKey + '_gameHealthLossMult',
-			valueSuffix: 'x',
-			max: 5,
-			min: 0.1,
-			valueStep: 0.1
-		},
-		{
-			type: 'checkbox',
-			title: 'Instakill on Miss',
-			description: '*If you miss you die.',
-			defaultValue: false,
-			parentValue: songKey + '_missInstaKill'
-		},
-		{
-			type: 'checkbox',
-			title: 'Opponent Mode',
-			description: '*If checked, you play on the/ñopponent side instead of the/ñplayer side.',
-			defaultValue: false,
-			parentValue: songKey + '_gameOpponentMode'
-		}
-	];
+    var configArray:Array<Dynamic> = [
+        {
+            type: 'choice',
+            title: 'Scroll Type',
+            description: '*If the scroll speed value/ñshould multiply or replace/ñthe song\'s scroll speed.',
+            defaultValue: 0,
+            parentValue: songKey + '_gameScrollType',
+            choices: ['multiplicative', 'constant']
+        },
+        {
+            type: 'slider',
+            title: 'Scroll Speed',
+            description: '*Your scroll speed.',
+            defaultValue: 1,
+            parentValue: songKey + '_gameScrollSpeed',
+            min: 0.1,
+            max: 6,
+            valueStep: 0.05
+        },
+        {
+            type: 'slider',
+            title: 'Health Gain Multiplier',
+            description: '*The value your health won/ñwhen hitting a note is/ñmultiplied by.',
+            defaultValue: 1,
+            parentValue: songKey + '_gameHealthGainMult',
+            valueSuffix: 'x',
+            max: 5,
+            min: 0.1,
+            valueStep: 0.1
+        },
+        {
+            type: 'slider',
+            title: 'Health Loss Multiplier',
+            description: '*The value your health lost/ñwhen missing a note is/ñmultiplied by.',
+            defaultValue: 1,
+            parentValue: songKey + '_gameHealthLossMult',
+            valueSuffix: 'x',
+            max: 5,
+            min: 0.1,
+            valueStep: 0.1
+        },
+        {
+            type: 'checkbox',
+            title: 'Instakill on Miss',
+            description: '*If you miss you die.',
+            defaultValue: false,
+            parentValue: songKey + '_missInstaKill'
+        },
+        {
+            type: 'checkbox',
+            title: 'Opponent Mode',
+            description: '*If checked, you play on the/ñopponent side instead of the/ñplayer side.',
+            defaultValue: false,
+            parentValue: songKey + '_gameOpponentMode'
+        },
+        // ★ 改动：Botplay 描述增加 /ñ 换行，防止超出屏幕
+        {
+            type: 'checkbox',
+            title: 'Botplay',
+            description: '*If enabled, the song will be played/nautomatically by the bot.',
+            defaultValue: false,
+            parentValue: songKey + '_botplay'
+        }
+    ];
 
-	openSubState(new ModSubState('OptionSubstateSubstate', [lockObj, configArray]));
+    openSubState(new ModSubState('OptionSubstateSubstate', [lockObj, configArray]));
 }
 
 function onFocus() {

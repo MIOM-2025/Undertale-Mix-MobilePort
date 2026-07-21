@@ -40,11 +40,9 @@ class Checkbox extends FlxSprite {
 		// 读取保存值，若不存在则写入默认值
 		currentValue = Reflect.field(saveState, parentValue);
 		if (currentValue == null) {
-			// 先确保 currentValue 是默认值（布尔类型）
 			currentValue = defaultValue;
 			Reflect.setField(saveState, parentValue, defaultValue);
 		}
-		// 现在 currentValue 不会是 null，可以安全赋给 checked
 		checked = currentValue;
 		animation.play((!checked ? 'checking' : 'unchecking'), true);
 		offset.x = 11;
@@ -55,23 +53,16 @@ class Checkbox extends FlxSprite {
 	override function update(elapsed:Float) {
 		setPosition(parentObject.x - 13, parentObject.y - 6);
 		
-		// 键盘回车切换（按下触发）
+		// 仅保留键盘回车切换
 		if (controls.ACCEPT && parentObject.color == FlxColor.YELLOW) {
 			toggle();
 		}
 		
-		// 鼠标点击切换（松开触发）
-		if (parentObject.color == FlxColor.YELLOW && FlxG.mouse.justReleased) {
-			var mainCamera = (cameras != null && cameras.length > 0) ? cameras[0] : FlxG.camera;
-			var mousePos = FlxG.mouse.getWorldPosition(mainCamera);
-			if (this.overlapsPoint(mousePos, false, mainCamera)) {
-				toggle();
-			}
-		}
+		// 移除了鼠标点击切换逻辑，防止与文本点击重合
 	}
 	
 	/**
-	 * 公开的切换方法，供外部调用（例如键盘或其它UI）
+	 * 公开的切换方法，供外部调用
 	 * 切换状态、保存并播放音效
 	 */
 	public function toggle():Void {
