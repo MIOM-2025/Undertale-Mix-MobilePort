@@ -23,6 +23,13 @@ var redirectStates:Map<FlxState, Dynamic> = [
 	FreeplayState => 'MixedFreeplayState',
 ];
 function preStateSwitch() {
+    Framerate.codenameBuildField.text = 'Undertale Mix\nMIOM.MobileBuild-Demo';
+    Framerate.codenameBuildField.textColor = 0x02cb4c6;
+    Framerate.fpsCounter.fpsNum.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 24);
+    Framerate.fpsCounter.fpsLabel.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 16);
+    Framerate.memoryCounter.memoryText.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 12);
+    Framerate.memoryCounter.memoryPeakText.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 12);
+    Framerate.codenameBuildField.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 16);
     for (redirectState in redirectStates.keys()) 
         if (Std.isOfType(FlxG.game._requestedState, redirectState))  {
             var State = redirectStates.get(redirectState);
@@ -31,6 +38,7 @@ function preStateSwitch() {
 }
 
 function postCreate() {
+
 	if (FlxG.save.data.timePlayed == null) {
 		time = 0;
 	}
@@ -49,9 +57,6 @@ function update(elapsed:Float) {
 function destroy() {
 	FlxG.save.data.timePlayed = time;
 }
-
-
-
 #if desktop
     var normalPixels:flixel.graphics.FlxGraphic;
     var pressedPixels:flixel.graphics.FlxGraphic;
@@ -112,13 +117,4 @@ function update(elapsed:Float) {
     }else{   
         FlxG.mouse.load(normalPixels, 0.7, 1, -11);
     }
-}
-function preStateSwitch() {
-    Framerate.codenameBuildField.text = 'Undertale Mix\nMIOM.MobileBuild-Demo';
-    Framerate.codenameBuildField.textColor = 0x02cb4c6;
-    Framerate.fpsCounter.fpsNum.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 24);
-    Framerate.fpsCounter.fpsLabel.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 16);
-    Framerate.memoryCounter.memoryText.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 12);
-    Framerate.memoryCounter.memoryPeakText.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 12);
-    Framerate.codenameBuildField.defaultTextFormat = new TextFormat(Paths.getFontName(Paths.font('DTM-Mono.ttf')), 20);
 }
