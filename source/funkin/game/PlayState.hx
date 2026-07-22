@@ -892,10 +892,14 @@ class PlayState extends MusicBeatState
 			e.cameras = [camHUD];
 		#end
 
-		// --- 修改点：移除了 addMobilePad('NONE', 'P') 及后续 deadZones 设置 ---
 		addHitbox();
+		
 		mobileManager.hitbox.visible = false;
-		// ----------------------------------------------------------------
+		mobileManager.hitbox.forEachAlive((button) ->
+		{
+			if (getMobilePadButton("buttonP") != null)
+				button.deadZones.push(getMobilePadButton("buttonP"));
+		});
 
 		startingSong = true;
 
