@@ -893,7 +893,7 @@ class PlayState extends MusicBeatState
 		#end
 
 		addHitbox();
-		
+		addMobilePad('NONE', 'P');
 		mobileManager.hitbox.visible = false;
 		mobileManager.hitbox.forEachAlive((button) ->
 		{
