@@ -9,7 +9,7 @@
 
 	<app
 		title="UNDERTALE MIX" main="funkin.backend.system.Main"
-		file="CodenameEngine" packageName="com.undertale.mix.miom.mobileuiport"
+		file="UNDERTALE-MIX" packageName="com.undertale.mix.miom.mobileuiport"
 		package="com.undertale.mix.miom.mobileuiport"
 		version="1.0.1" company="Yoshman29" />
 
